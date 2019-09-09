@@ -58,7 +58,8 @@ def get_clan_current_member_num(clan_id, clan_api):
 ######################################
 # 1. 检索频率30分钟一次
 ######################################
-def trigger_mail(current_member_num, has_qq, has_weichat):
+def verify_need_mail(data):
+    # current_member_num, has_qq, has_weichat
     # 达到以下条件，触发邮件通知
     # 1：部落人数小于50人（可以根据部落ID手动进入部落，联系首领）
     # OR
@@ -66,23 +67,24 @@ def trigger_mail(current_member_num, has_qq, has_weichat):
     # OR
     # 3：检索到微信号（根据微信号，联系首领）
     need_mail = False
-    if current_member_num < 50 | has_qq is True | has_weichat is True:
-        need_mail = True
+    for each_user in data:
+        if int(each_user["clan_num"]) < 50 | each_user["clan_qq"] != '检索不到QQ':
+            need_mail = True
     return need_mail
 
 
-def send_mail(mail_content):
+def send_mail(mail_body):
     # 第三方 SMTP 服务
     mail_host = "smtp.163.com"  # SMTP服务器
     mail_user = "superman139"  # 用户名
     mail_pass = "fucksb123"  # 授权密码，非登录密码
 
     sender = "superman139@163.com"
-    receivers = ['335993634@qq.com', '361705773@qq.com']
+    receivers = ['neosunchao@icloud.com', '361705773@qq.com']
 
     title = '干活啦，搞这两SB了'  # 邮件主题
 
-    message = MIMEText(mail_content, 'plain', 'utf-8')  # 内容, 格式, 编码
+    message = MIMEText(mail_body, 'plain', 'utf-8')  # 内容, 格式, 编码
     message['From'] = "{}".format(sender)
     message['To'] = ",".join(receivers)
     message['Subject'] = title
