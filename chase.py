@@ -60,7 +60,10 @@ def _fuck_user(player_id, name, each_user):
             each_user["show_msg"] = "SB名：" + each_user["sb_name"] + "（" + each_user["player_id"] + ")" + \
                                     " 部落ID：" + each_user["clan_id"] + \
                                     " 部落QQ群：" + each_user["clan_qq"] + \
-                                    " 部落人数：" + each_user["clan_num"] + '\n'
+                                    " 部落人数：" + each_user["clan_num"] + '\n' + \
+                                    "尝试使用以下模板发送QQ邮件给首领：" + '\n' + \
+                                    "你好，XXX部落的首领，" + '\n' + \
+                                    "我是部落clat 的首领，你的新部落成员：XXX曾在我们部落把所有成员踢出部落，如下是截图：" + '\n'
             if (int(each_user["clan_num"]) < 50) | (each_user["clan_qq"] != '检索不到QQ'):
                 each_user["need_mail"] = True
 
@@ -86,9 +89,14 @@ def check_sb():
     send_mail(mail_body)
 
 
+def health_check():
+    send_mail("Check SB Python服务正在运行中...")
+
+
 def main():
-    check_sb()
-    # threading.Timer(interval_sb, check_sb).start()
+    # check_sb()
+    threading.Timer(interval_sb, check_sb).start()
+    threading.Timer(interval_self, health_check).start()
 
 
 if __name__ == "__main__":
