@@ -1,9 +1,11 @@
-#coding=utf-8
+# coding=utf-8
 
 import re
 import requests
 from bs4 import BeautifulSoup
 from tools import *
+import threading
+import time
 
 GTO_ID = "G22CY890"
 XIAOBO_ID = "2Q9GC89GP"
@@ -11,16 +13,21 @@ XIAOBO_ID = "2Q9GC89GP"
 PLAYER_API = "https://royaleapi.com/player/"
 CLAN_API = "https://royaleapi.com/clan/"
 
+interval_sb = 1800  # 每30分钟检查一次
+interval_self = 43200  # 每12小时检查自身定时器的健康状态
+
 data = [
     {
         "player_id": "2Q9GC89GP",
         "sb_name": "小波",
-        "clan": "", "clan_id": "", "clan_qq": "", "clan_weixin": "", "clan_num": ""
+        "clan_id": "", "clan_qq": "", "clan_weixin": "", "clan_num": "",
+        "show_msg": "", "need_mail": False
     },
     {
         "player_id": "G22CY890",
         "sb_name": "GTO_Brand",
-        "clan": "", "clan_id": "", "clan_qq": "", "clan_weixin": "", "clan_num": ""
+        "clan_id": "", "clan_qq": "", "clan_weixin": "", "clan_num": "",
+        "show_msg": "", "need_mail": False
     }
 ]
 
@@ -50,14 +57,12 @@ def _fuck_user(player_id, name, each_user):
             each_user["clan_id"] = clan_id
             each_user["clan_num"] = get_clan_current_member_num(clan_id, CLAN_API)
             each_user["clan_qq"] = try_get_qq(clan_id, CLAN_API)
-
-
-def fuck_xiaobo():
-    _fuck_user(XIAOBO_ID, 'xiaobo')
-
-
-def fuck_gto_brand():
-    _fuck_user(GTO_ID, 'GTO_brand')
+            each_user["show_msg"] = "SB名：" + each_user["sb_name"] + "（" + each_user["player_id"] + ")" + \
+                                    " 部落ID：" + each_user["clan_id"] + \
+                                    " 部落QQ群：" + each_user["clan_qq"] + \
+                                    " 部落人数：" + each_user["clan_num"] + '\n'
+            if (int(each_user["clan_num"]) < 50) | (each_user["clan_qq"] != '检索不到QQ'):
+                each_user["need_mail"] = True
 
 
 def analysis_data():
@@ -65,36 +70,26 @@ def analysis_data():
         _fuck_user(each_user["player_id"], "XXX", each_user)
 
 
-def show_data():
+def prepare_msg():
     message = ""
     for each_user in data:
-        message = message + "SB名：" + each_user["sb_name"] + "（" + each_user["player_id"] + ")" + \
-              " 部落名：" + each_user["clan"] + \
-              " 部落ID：" + each_user["clan_id"] + \
-              " 部落QQ群：" + each_user["clan_qq"] + \
-              " 部落人数：" + each_user["clan_num"] + '\n'
-        print("SB名：" + each_user["sb_name"] + "（" + each_user["player_id"] + ")" +
-              " 部落名：" + each_user["clan"] +
-              " 部落ID：" + each_user["clan_id"] +
-              " 部落QQ群：" + each_user["clan_qq"] +
-              " 部落人数：" + each_user["clan_num"])
-    send_mail(message)
+        message = message + each_user["show_msg"] + '\n'
+    return message
+
+
+def check_sb():
+    analysis_data()
+    mail_body = ""
+    for each_user in data:
+        if each_user["need_mail"] is True:
+            mail_body = mail_body + each_user["show_msg"]
+    send_mail(mail_body)
 
 
 def main():
-    analysis_data()
-    show_data()
-    #get_clan_description('PPPP0JCQ')
-    #fuck_xiaobo()
-    #print("====="*4)
-    #fuck_gto_brand()
-
-
+    check_sb()
+    # threading.Timer(interval_sb, check_sb).start()
 
 
 if __name__ == "__main__":
     main()
-
-
-
-
